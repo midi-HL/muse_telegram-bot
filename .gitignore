@@ -1,0 +1,26 @@
+# Secrets — never commit
+.env
+
+# Runtime data (message content, state)
+inbox/
+processed/
+tmp/
+state/
+
+# ASR runtime + models (~310 MB of downloads; reproduce with
+# scripts/setup_asr.sh — see docs/asr.md)
+asr/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# runtime/demo assets
+welcome-640x360.jpg
+config.json
+tests/voice_sample.ogg

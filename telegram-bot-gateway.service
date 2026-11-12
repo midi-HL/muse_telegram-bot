@@ -1,0 +1,37 @@
+# telegram-bot-gateway.service — systemd unit for the Telegram bot gateway.
+#
+# STATUS: NOT INSTALLED / NOT ENABLED yet.
+# Enable ONLY after the real BotFather token has been written into .env
+# (see README.md "Activation"). Then:
+#   cp telegram-bot-gateway.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now telegram-bot-gateway.service
+# (or copy to /etc/systemd/system/ and use plain systemctl, if preferred)
+#
+# The service is a plain long-polling Python script (stdlib only):
+# it polls getUpdates, writes one directory per message into inbox/
+# (message.json + downloaded attachments + voice transcript), and the
+# agent replies via send.py. Crashes are restarted by systemd.
+
+[Unit]
+Description=Telegram bot gateway for Muse (long-polling inbox)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/hatch/workspace/telegram-bot-gateway
+ExecStart=/usr/bin/python3 /home/hatch/workspace/telegram-bot-gateway/gateway.py
+Restart=on-failure
+RestartSec=10
+# The token lives in .env (chmod 600) which gateway.py reads itself;
+# EnvironmentFile is belt-and-braces so systemd also has it.
+EnvironmentFile=-/home/hatch/workspace/telegram-bot-gateway/.env
+# Mild hardening; the service only needs its workspace + network egress.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/home/hatch/workspace/telegram-bot-gateway
+
+[Install]
+WantedBy=default.target
