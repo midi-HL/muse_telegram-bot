@@ -14,6 +14,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - `docs/configuration.md` — complete configuration reference:
   every `.env` variable and `config.json` key with type, default,
   effect and example, plus the BotFather privacy-mode note.
+- `README.zh-CN.md` / `README.ja.md` — full Simplified Chinese and
+  Japanese translations of the README; all three READMEs now carry
+  a language switcher as their first line.
 
 ### Changed
 - README: "Known limits" expanded into a full Limitations section

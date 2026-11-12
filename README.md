@@ -1,3 +1,5 @@
+**English** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md)
+
 # telegram-bot-gateway
 
 **A Telegram bot as a local inbox for an AI agent.** You message the
@@ -130,6 +132,8 @@ measured output and timings are in [docs/asr.md](docs/asr.md).
 - [ASR](docs/asr.md) — the sherpa-onnx/Paraformer stack and results
 - [Security](docs/security.md) — token handling, trust model,
   hostile-input rules
+- **Translations** — this README is also available in
+  [简体中文](README.zh-CN.md) and [日本語](README.ja.md)
 
 ## Limitations
 
