@@ -107,7 +107,8 @@ Kept in agreement with the README's Limitations section:
 - **One poller per bot**: a second gateway instance on the same
   token gets `409 Conflict`; the design assumes exactly one
   writer of `inbox/`.
-- **Platform**: Python 3.10+ stdlib only; the ASR runtime binaries
+- **Platform**: Python 3.10+ stdlib only (downloads prefer `curl`
+  when installed, urllib fallback); the ASR runtime binaries
   are linux-x86_64 and need `ffmpeg` on PATH.
 - **License**: CC BY-NC-SA 4.0 — no commercial use.
 

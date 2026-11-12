@@ -24,3 +24,6 @@ __pycache__/
 welcome-640x360.jpg
 config.json
 tests/voice_sample.ogg
+
+# runtime log from local activation runs
+activation.log

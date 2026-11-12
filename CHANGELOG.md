@@ -30,6 +30,15 @@ versioning follows [Semantic Versioning](https://semver.org/).
   no commercial use; attribution and share-alike required.
 - `welcome-640x360.jpg` untracked (personal bot asset, not source).
 
+### Fixed
+- Attachment downloads could be stored silently truncated: behind
+  the deployment's egress proxy, urllib streams were cut at a fixed
+  byte count and `copyfileobj` swallowed the IncompleteRead (found
+  via a 32,484-of-42,560-byte sticker). Downloads now verify the
+  byte count against Telegram's declared size, retry up to 3 times,
+  and prefer `curl` (token passed via a 0600 config file, never
+  argv) with a urllib fallback.
+
 ## [0.1.0] - 2026-11-12
 
 First working version: built, mock-tested end-to-end, not yet activated

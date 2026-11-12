@@ -164,15 +164,64 @@ class BotAPI:
             params["offset"] = offset
         return self.call("getUpdates", params, timeout=poll_timeout + 20)
 
-    def download_file(self, file_id: str, dest: Path) -> str:
-        """Download a file via getFile; returns the server-side file_path."""
+    def download_file(self, file_id: str, dest: Path,
+                      expected_size: int | None = None) -> str:
+        """Download a file via getFile; returns the server-side file_path.
+
+        Up to 3 attempts. When the expected byte count is known (the size
+        Telegram declared for the attachment, or the size from getFile),
+        a short download raises instead of being stored silently — a
+        flaky proxy closing the stream early otherwise leaves corrupt
+        attachments behind with no trace of the failure.
+        """
         info = self.call("getFile", {"file_id": file_id})
         file_path = info["file_path"]
+        if expected_size is None:
+            expected_size = info.get("file_size")
         url = f"{self.api_base}/file/bot{self.token}/{urllib.parse.quote(file_path)}"
+        last_exc: Exception | None = None
+        for _attempt in range(3):
+            try:
+                self._download_once(url, dest)
+                if expected_size is not None and dest.stat().st_size != int(expected_size):
+                    raise OSError(
+                        f"short download: got {dest.stat().st_size} "
+                        f"of {int(expected_size)} bytes")
+                return file_path
+            except Exception as exc:  # retried below; final attempt re-raises
+                last_exc = exc
+        raise last_exc if last_exc is not None else RuntimeError("download failed")
+
+    def _download_once(self, url: str, dest: Path) -> None:
+        """One download attempt, writing the response body to dest.
+
+        Prefers curl when it is installed: behind some egress proxies a
+        Python-urllib stream is cut short mid-body at a fixed byte count
+        (http.client.IncompleteRead, silently swallowed by copyfileobj)
+        while curl receives the full file. The URL embeds the bot
+        token, so it is handed to curl through a 0600 config file,
+        never on its command line. Falls back to urllib when curl is
+        absent.
+        """
+        curl = shutil.which("curl")
+        if curl:
+            cfg = dest.with_suffix(".curlcfg")
+            try:
+                cfg.write_text(f'url = "{url}"\n', encoding="utf-8")
+                cfg.chmod(0o600)
+                proc = subprocess.run(
+                    [curl, "-f", "-sS", "--max-time", "300", "-K", str(cfg),
+                     "-o", str(dest)],
+                    capture_output=True, text=True, timeout=320)
+                if proc.returncode != 0:
+                    raise OSError(
+                        f"curl download failed: {proc.stderr.strip()[-200:]}")
+                return
+            finally:
+                cfg.unlink(missing_ok=True)
         req = urllib.request.Request(url)
         with urllib.request.urlopen(req, timeout=300) as resp, open(dest, "wb") as out:
             shutil.copyfileobj(resp, out, length=65536)
-        return file_path
 
 
 def load_offset() -> int | None:
@@ -328,7 +377,8 @@ class Gateway:
         }
         raw_path = staging / f".dl-{spec['kind']}"
         try:
-            server_path = self.api.download_file(spec["file_id"], raw_path)
+            server_path = self.api.download_file(
+                spec["file_id"], raw_path, expected_size=spec.get("file_size"))
             suffix = Path(server_path).suffix
             if spec["file_name"]:
                 name = _safe_name(spec["file_name"])

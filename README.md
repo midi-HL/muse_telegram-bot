@@ -10,6 +10,9 @@ ready as files for multimodal input), replies through the bot, and
 marks them done.
 
 - **Zero dependencies** — Python 3 standard library only. No pip.
+  (One exception: if `curl` is installed, file downloads prefer it —
+  some proxies cut urllib streams short mid-file — with a urllib
+  fallback.)
 - **Local ASR** — voice notes are transcribed on the box with
   sherpa-onnx + a Paraformer zh/en bilingual model. No audio leaves
   the machine.
@@ -153,6 +156,8 @@ measured output and timings are in [docs/asr.md](docs/asr.md).
   `409 Conflict` from Telegram.
 - **Python 3.10+, standard library only**: no pip installs, but
   also no newer-runtime features; ASR is the only heavy piece.
+  Downloads prefer `curl` when it is installed and verify byte
+  counts, so a truncated transfer is retried, never stored silently.
 - **ASR stack is linux-x86_64**: the prebuilt sherpa-onnx runtime
   binaries installed by `scripts/setup_asr.sh` target
   linux-x86_64, and `ffmpeg` must be on PATH. Other platforms need
